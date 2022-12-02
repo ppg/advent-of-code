@@ -13,10 +13,11 @@ const (
 	EnvSolution = "SOLUTION"
 )
 
-var solutions []Solution
+type SolutionHandler[T any] func(io.Writer, *Runner[T])
+type SolutionParser[T any] func(string) T
 
-func Register(solution Solution) {
-	solutions = append(solutions, solution)
+func Register[T any](parse SolutionParser[T], handle SolutionHandler[T]) {
+	solutions = append(solutions, &solution[T]{handle: handle, parse: parse})
 }
 
 func Run(w io.Writer) {
@@ -32,7 +33,7 @@ func Run(w io.Writer) {
 			panic(fmt.Errorf("solution index out of range: %d (max:%d)", index, len(solutions)-1))
 		}
 	}
-	solution := solutions[index]
+	s := solutions[index]
 
 	// Parse the part input
 	var part int
@@ -57,18 +58,27 @@ func Run(w io.Writer) {
 
 	// Run the solution
 	fmt.Fprintf(w, "running with solution=%d, part=%d\n", index, part)
-	solution(w, &Runner{scanner: scanner, part: part})
+	s.Handle(w, scanner, part)
 }
 
-type Runner struct {
+type Runner[T any] struct {
 	scanner *bufio.Scanner
 	part    int
+	parse   SolutionParser[T]
 }
 
-func (r *Runner) Scan() bool   { return r.scanner.Scan() }
-func (r *Runner) Text() string { return r.scanner.Text() }
+func (r *Runner[T]) Lines() <-chan T {
+	ch := make(chan T)
+	go func() {
+		for r.scanner.Scan() {
+			ch <- r.parse(r.scanner.Text())
+		}
+		close(ch)
+	}()
+	return ch
+}
 
-func (r *Runner) ByPart(part1, part2 func()) {
+func (r *Runner[T]) ByPart(part1, part2 func()) {
 	switch r.part {
 	case 1:
 		part1()
@@ -79,9 +89,17 @@ func (r *Runner) ByPart(part1, part2 func()) {
 	}
 }
 
-type Solution func(io.Writer, *Runner)
+var solutions []isolution
 
-type LineScanner interface {
-	Scan() bool
-	Text() string
+type isolution interface {
+	Handle(io.Writer, *bufio.Scanner, int)
+}
+
+type solution[T any] struct {
+	handle SolutionHandler[T]
+	parse  SolutionParser[T]
+}
+
+func (s *solution[T]) Handle(w io.Writer, scanner *bufio.Scanner, part int) {
+	s.handle(w, &Runner[T]{scanner: scanner, part: part, parse: s.parse})
 }

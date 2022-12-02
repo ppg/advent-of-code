@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Benchmark(b *testing.B, solution Solution, part int) {
+func Benchmark[T any](b *testing.B, parse SolutionParser[T], handle SolutionHandler[T], part int) {
 	w := io.Discard
 
 	// Read the input
@@ -21,6 +21,7 @@ func Benchmark(b *testing.B, solution Solution, part int) {
 		}
 		scanner := bufio.NewScanner(file)
 		scanner.Split(bufio.ScanLines)
-		solution(w, &Runner{scanner: scanner, part: part})
+		s := &solution[T]{handle: handle, parse: parse}
+		s.Handle(w, scanner, part)
 	}
 }

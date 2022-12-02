@@ -16,25 +16,23 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/ppg/advent-of-code/2022/12/framework"
 )
 
 func main() {
-	framework.Register(solution0)
-	framework.Register(solution1)
+	framework.Register(framework.LineParser, solution0)
+	framework.Register(framework.LineParser, solution1)
 	framework.Run(os.Stdout)
 }
 
 // Solution 0 collects the elves into a slice and sorts at the end.
 // This solution handles both parts of the question.
-func solution0(w io.Writer, runner *framework.Runner) {
+func solution0(w io.Writer, runner *framework.Runner[string]) {
 	elves := make([]*Elf, 0, 256) // 256 is the input.txt size
 	elf := new(Elf)
 	elves = append(elves, elf)
-	for runner.Scan() {
-		line := strings.TrimSpace(runner.Text())
+	for line := range runner.Lines() {
 		if line == "" {
 			fmt.Fprintf(w, "%d: %d total\n", elf.id, elf.calories)
 			elf = &Elf{id: elf.id + 1}
@@ -67,11 +65,10 @@ type Elf struct {
 
 // Solution 1 uses a heap to track the highest elves in an ongoing, efficient fashion.
 // This solution handles both parts of the question.
-func solution1(w io.Writer, runner *framework.Runner) {
+func solution1(w io.Writer, runner *framework.Runner[string]) {
 	elves := make(ElfHeap, 0, 256) // 256 is the input.txt size
 	var elf Elf
-	for runner.Scan() {
-		line := strings.TrimSpace(runner.Text())
+	for line := range runner.Lines() {
 		if line == "" {
 			// Add elf to the heap
 			fmt.Fprintf(w, "%d: %d total\n", elf.id, elf.calories)

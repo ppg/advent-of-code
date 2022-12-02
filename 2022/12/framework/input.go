@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func readInput(w io.Writer) (*os.File, func() error) {
@@ -20,4 +21,16 @@ func readInput(w io.Writer) (*os.File, func() error) {
 	}
 
 	return file, file.Close
+}
+
+func LineParser(line string) string { return strings.TrimSpace(line) }
+
+func ColParser(n int) func(line string) []string {
+	return func(line string) []string {
+		cols := strings.Split(line, " ")
+		if len(cols) != n {
+			panic(fmt.Errorf("unexpected number of columns %d, expected %d:\n%s", len(cols), n, line))
+		}
+		return cols
+	}
 }

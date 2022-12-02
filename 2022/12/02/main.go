@@ -4,29 +4,23 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	framework "github.com/ppg/advent-of-code/2022/12/framework"
 )
 
 func main() {
-	framework.Register(solution0)
-	framework.Register(solution1)
+	framework.Register(parser, solution0)
+	framework.Register(parser, solution1)
 	framework.Run(os.Stdout)
 }
 
+var parser = framework.ColParser(2)
+
 // Solution 0 matches the columns to the play, and then calculates the score.
-func solution0(w io.Writer, runner *framework.Runner) {
+func solution0(w io.Writer, runner *framework.Runner[[]string]) {
 	var total int
 	fmt.Fprintf(w, "%10s %10s %5s\n", "opponent", "self", "score")
-	for runner.Scan() {
-		// Get the entries from the line
-		line := strings.TrimSpace(runner.Text())
-		cols := strings.Split(line, " ")
-		if len(cols) != 2 {
-			panic(fmt.Errorf("unexpected input: %s", line))
-		}
-
+	for cols := range runner.Lines() {
 		// The opponent's play is always the first column
 		opponent := opponentPlays[cols[0]]
 
@@ -122,16 +116,9 @@ var vsScores = map[Play]map[Play]int{
 }
 
 // Solution 1 looks up the pre-computed score given the column inputs
-func solution1(w io.Writer, runner *framework.Runner) {
+func solution1(w io.Writer, runner *framework.Runner[[]string]) {
 	var total int
-	for runner.Scan() {
-		// Get the entries from the line
-		line := strings.TrimSpace(runner.Text())
-		cols := strings.Split(line, " ")
-		if len(cols) != 2 {
-			panic(fmt.Errorf("unexpected input: %s", line))
-		}
-
+	for cols := range runner.Lines() {
 		var score int
 		runner.ByPart(
 			func() { score = part1Scores[cols[0]][cols[1]] },
