@@ -22,7 +22,7 @@ func main() {
 
 	fileScanner := bufio.NewScanner(readFile)
 	fileScanner.Split(bufio.ScanLines)
-	fmt.Printf("%10s %10s %5s\n", "opponent", "self", "score")
+	//fmt.Printf("%10s %10s %5s\n", "opponent", "self", "score")
 	for fileScanner.Scan() {
 		// Get the entries from the line
 		line := strings.TrimSpace(fileScanner.Text())
@@ -30,28 +30,72 @@ func main() {
 		if len(cols) != 2 {
 			panic(fmt.Errorf("unexpected input: %s", line))
 		}
-		// The opponent's play is always the first column
-		opponent := opponentPlays[cols[0]]
 
-		// Get the self play depending on which question part
-		var self Play
+		var score int
 		if os.Getenv("PART") == "2" {
-			// in part 2 the second column is interpreted as the desired outcome, so
-			// lookup the self play in a map of outcomes from desired outcome to what
-			// the opponent has
-			self = outcomePlays[cols[1]][opponent]
+			score = part2Scores[cols[0]][cols[1]]
 		} else {
-			// in part 1 the second column is interpreted as the self play, so lookup the self play in it's map
-			self = selfPlays[cols[1]]
+			score = part1Scores[cols[0]][cols[1]]
 		}
-
-		// Score self play and the outcome and accumulate
-		score := playScores[self] + vsScores[self][opponent]
 		total += score
 
-		fmt.Printf("%10s %10s %5d\n", opponent, self, score)
+		//// The opponent's play is always the first column
+		//opponent := opponentPlays[cols[0]]
+
+		//// Get the self play depending on which question part
+		//var self Play
+		//if os.Getenv("PART") == "2" {
+		//	// in part 2 the second column is interpreted as the desired outcome, so
+		//	// lookup the self play in a map of outcomes from desired outcome to what
+		//	// the opponent has
+		//	self = outcomePlays[cols[1]][opponent]
+		//} else {
+		//	// in part 1 the second column is interpreted as the self play, so lookup the self play in it's map
+		//	self = selfPlays[cols[1]]
+		//}
+
+		//// Score self play and the outcome and accumulate
+		//score := playScores[self] + vsScores[self][opponent]
+		//total += score
+
+		//fmt.Printf("%10s %10s %5d\n", opponent, self, score)
 	}
 	fmt.Printf("Total: %d\n", total)
+}
+
+var part1Scores = map[string]map[string]int{
+	"A": map[string]int{ // opponent: rock
+		"X": 4, // self: rock(1) + draw(3)
+		"Y": 8, // self: paper(2) + win(6)
+		"Z": 3, // self: scissors(3) + loss(0)
+	},
+	"B": map[string]int{ // opponent: paper
+		"X": 1, // self: rock(1) + loss(0)
+		"Y": 5, // self: paper(2) + draw(3)
+		"Z": 9, // self: scissors(3) + win(6)
+	},
+	"C": map[string]int{ // opponent: scissors
+		"X": 7, // self: rock(1) + win(6)
+		"Y": 2, // self: paper(2) + loss(0)
+		"Z": 6, // self: scissors(3) + draw(3)
+	},
+}
+var part2Scores = map[string]map[string]int{
+	"A": map[string]int{ // opponent: rock
+		"X": 3, // loss(0) + scissors(3)
+		"Y": 4, // draw(3) + rock(1)
+		"Z": 8, // win(6) + paper(2)
+	},
+	"B": map[string]int{ // opponent: paper
+		"X": 1, // loss(0) + rock(1)
+		"Y": 5, // draw(3) + paper(2)
+		"Z": 9, // win(6) + scissors(3)
+	},
+	"C": map[string]int{ // opponent: scissors
+		"X": 2, // loss(0) + paper(2)
+		"Y": 6, // draw(3) + scissors(3)
+		"Z": 7, // win(6) + rock(1)
+	},
 }
 
 var opponentPlays = map[string]Play{
