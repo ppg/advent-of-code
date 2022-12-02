@@ -48,12 +48,11 @@ func Run(w io.Writer) {
 	}
 
 	// Read the input
-	// Read the input
-	file, close := readInput(w)
-	defer close()
+	reader := readInput(w)
+	defer reader.Close()
 
 	// Create a scanner
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
 
 	// Run the solution
