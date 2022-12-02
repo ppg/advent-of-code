@@ -1,5 +1,6 @@
-https://adventofcode.com/2022/day/1
+# [Puzzle](https://adventofcode.com/2022/day/1)
 
+```ascii
 --- Day 1: Calorie Counting ---
 Santa's reindeer typically eat regular reindeer food, but they need a lot of
 magical energy to deliver presents on Christmas. For that, their favorite snack
@@ -85,3 +86,18 @@ those Elves carrying in total?
 Your puzzle answer was 212836.
 
 Both parts of this puzzle are complete! They provide two gold stars: **
+```
+
+## Solutions
+
+```shell
+$ go test -bench=.
+goos: linux
+goarch: amd64
+pkg: github.com/ppg/advent-of-code/2022/12/01
+cpu: 11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
+BenchmarkSolution0-16    	   10000	    102417 ns/op
+BenchmarkSolution1-16    	   12904	     90188 ns/op
+PASS
+ok  	github.com/ppg/advent-of-code/2022/12/01	3.141s
+```

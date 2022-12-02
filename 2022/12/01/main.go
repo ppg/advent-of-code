@@ -10,34 +10,72 @@ https://adventofcode.com/2022/day/1
 package main
 
 import (
-	"bufio"
 	"container/heap"
 	"fmt"
+	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/ppg/advent-of-code/2022/12/framework"
 )
 
 func main() {
-	readFile, err := os.Open("input.txt")
-	if err != nil {
-		fmt.Println(err)
+	framework.Register(solution0)
+	framework.Register(solution1)
+	framework.Run(os.Stdout)
+}
+
+// Solution 0 collects the elves into a slice and sorts at the end.
+// This solution handles both parts of the question.
+func solution0(w io.Writer, runner *framework.Runner) {
+	elves := make([]*Elf, 0, 256) // 256 is the input.txt size
+	elf := new(Elf)
+	elves = append(elves, elf)
+	for runner.Scan() {
+		line := strings.TrimSpace(runner.Text())
+		if line == "" {
+			fmt.Fprintf(w, "%d: %d total\n", elf.id, elf.calories)
+			elf = &Elf{id: elf.id + 1}
+			elves = append(elves, elf)
+		} else {
+			calories, err := strconv.Atoi(line)
+			if err != nil {
+				panic(err)
+			}
+			elf.calories += calories
+		}
 	}
-	defer readFile.Close()
 
-	h := make(ElfHeap, 0, 256) // 256 is the input.txt size
+	sort.SliceStable(elves, func(i, j int) bool { return elves[i].calories < elves[j].calories })
+
+	fmt.Fprintf(w, "Highest Calories Elves (count:%d)\n", len(elves))
+	var total int
+	for i := 0; i < 3; i++ {
+		elf := elves[len(elves)-1-i]
+		fmt.Fprintf(w, "Elf %d: %d\n", elf.id, elf.calories)
+		total += elf.calories
+	}
+	fmt.Fprintf(w, "Total: %d\n", total)
+}
+
+type Elf struct {
+	id       int
+	calories int
+}
+
+// Solution 1 uses a heap to track the highest elves in an ongoing, efficient fashion.
+// This solution handles both parts of the question.
+func solution1(w io.Writer, runner *framework.Runner) {
+	elves := make(ElfHeap, 0, 256) // 256 is the input.txt size
 	var elf Elf
-
-	fileScanner := bufio.NewScanner(readFile)
-	fileScanner.Split(bufio.ScanLines)
-	for fileScanner.Scan() {
-		line := strings.TrimSpace(fileScanner.Text())
+	for runner.Scan() {
+		line := strings.TrimSpace(runner.Text())
 		if line == "" {
 			// Add elf to the heap
-			if os.Getenv("DEBUG") != "" {
-				fmt.Printf("%d: %d total\n", elf.id, elf.calories)
-			}
-			heap.Push(&h, elf)
+			fmt.Fprintf(w, "%d: %d total\n", elf.id, elf.calories)
+			heap.Push(&elves, elf)
 
 			// Create new elft
 			elf = Elf{id: elf.id + 1}
@@ -51,14 +89,14 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Highest Calories Elves\n")
+	fmt.Fprintf(w, "Highest Calories Elves (count:%d)\n", len(elves))
 	var total int
 	for i := 0; i < 3; i++ {
-		elf := heap.Pop(&h).(Elf)
-		fmt.Printf("Elf %03d: %d\n", elf.id, elf.calories)
+		elf := heap.Pop(&elves).(Elf)
+		fmt.Fprintf(w, "Elf %03d: %d\n", elf.id, elf.calories)
 		total += elf.calories
 	}
-	fmt.Printf("Total: %d\n", total)
+	fmt.Fprintf(w, "Total: %d\n", total)
 }
 
 type ElfHeap []Elf
@@ -81,9 +119,4 @@ func (h *ElfHeap) Pop() any {
 	x := old[n-1]
 	*h = old[0 : n-1]
 	return x
-}
-
-type Elf struct {
-	id       int
-	calories int
 }

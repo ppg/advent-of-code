@@ -1,5 +1,6 @@
-https://adventofcode.com/2022/day/2
+# [Puzzle](https://adventofcode.com/2022/day/2)
 
+```ascii
 --- Day 2: Rock Paper Scissors ---
 The Elves begin to set up camp on the beach. To decide whose tent gets to be
 closest to the snack storage, a giant Rock Paper Scissors tournament is already
@@ -81,3 +82,20 @@ score be if everything goes exactly according to your strategy guide?
 Your puzzle answer was 13448.
 
 Both parts of this puzzle are complete! They provide two gold stars: **
+```
+
+## Solutions
+
+```shell
+$ go test -bench=.
+goos: linux
+goarch: amd64
+pkg: github.com/ppg/advent-of-code/2022/12/02
+cpu: 11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
+BenchmarkSolution0Part1-16    	    1344	    884082 ns/op
+BenchmarkSolution0Part2-16    	    1321	    900831 ns/op
+BenchmarkSolution1Part1-16    	    4936	    258268 ns/op
+BenchmarkSolution2Part2-16    	    4548	    270835 ns/op
+PASS
+ok  	github.com/ppg/advent-of-code/2022/12/02	5.983s
+```

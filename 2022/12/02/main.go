@@ -1,102 +1,67 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
+
+	framework "github.com/ppg/advent-of-code/2022/12/framework"
 )
 
 func main() {
-	input := "input.txt"
-	if len(os.Args) > 1 {
-		input = os.Args[1]
-	}
-	readFile, err := os.Open(input)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer readFile.Close()
+	framework.Register(solution0)
+	framework.Register(solution1)
+	framework.Run(os.Stdout)
+}
 
+// Solution 0 matches the columns to the play, and then calculates the score.
+func solution0(w io.Writer, runner *framework.Runner) {
 	var total int
-
-	fileScanner := bufio.NewScanner(readFile)
-	fileScanner.Split(bufio.ScanLines)
-	//fmt.Printf("%10s %10s %5s\n", "opponent", "self", "score")
-	for fileScanner.Scan() {
+	fmt.Fprintf(w, "%10s %10s %5s\n", "opponent", "self", "score")
+	for runner.Scan() {
 		// Get the entries from the line
-		line := strings.TrimSpace(fileScanner.Text())
+		line := strings.TrimSpace(runner.Text())
 		cols := strings.Split(line, " ")
 		if len(cols) != 2 {
 			panic(fmt.Errorf("unexpected input: %s", line))
 		}
 
-		var score int
-		if os.Getenv("PART") == "2" {
-			score = part2Scores[cols[0]][cols[1]]
-		} else {
-			score = part1Scores[cols[0]][cols[1]]
-		}
+		// The opponent's play is always the first column
+		opponent := opponentPlays[cols[0]]
+
+		// Get the self play depending on which question part
+		var self Play
+		runner.ByPart(
+			// In part 1 the second column is interpreted as the self play, so lookup
+			// the self play in it's map
+			func() {
+				self = selfPlays[cols[1]]
+			},
+			// in part 2 the second column is interpreted as the desired outcome, so
+			// lookup the self play in a map of outcomes from desired outcome to what
+			// the opponent has
+			func() {
+				self = outcomePlays[cols[1]][opponent]
+			},
+		)
+
+		// Score self play and the outcome and accumulate
+		score := playScores[self] + vsScores[self][opponent]
 		total += score
 
-		//// The opponent's play is always the first column
-		//opponent := opponentPlays[cols[0]]
-
-		//// Get the self play depending on which question part
-		//var self Play
-		//if os.Getenv("PART") == "2" {
-		//	// in part 2 the second column is interpreted as the desired outcome, so
-		//	// lookup the self play in a map of outcomes from desired outcome to what
-		//	// the opponent has
-		//	self = outcomePlays[cols[1]][opponent]
-		//} else {
-		//	// in part 1 the second column is interpreted as the self play, so lookup the self play in it's map
-		//	self = selfPlays[cols[1]]
-		//}
-
-		//// Score self play and the outcome and accumulate
-		//score := playScores[self] + vsScores[self][opponent]
-		//total += score
-
-		//fmt.Printf("%10s %10s %5d\n", opponent, self, score)
+		fmt.Fprintf(w, "%10s %10s %5d\n", opponent, self, score)
 	}
-	fmt.Printf("Total: %d\n", total)
+	fmt.Fprintf(w, "Total: %d\n", total)
 }
 
-var part1Scores = map[string]map[string]int{
-	"A": map[string]int{ // opponent: rock
-		"X": 4, // self: rock(1) + draw(3)
-		"Y": 8, // self: paper(2) + win(6)
-		"Z": 3, // self: scissors(3) + loss(0)
-	},
-	"B": map[string]int{ // opponent: paper
-		"X": 1, // self: rock(1) + loss(0)
-		"Y": 5, // self: paper(2) + draw(3)
-		"Z": 9, // self: scissors(3) + win(6)
-	},
-	"C": map[string]int{ // opponent: scissors
-		"X": 7, // self: rock(1) + win(6)
-		"Y": 2, // self: paper(2) + loss(0)
-		"Z": 6, // self: scissors(3) + draw(3)
-	},
-}
-var part2Scores = map[string]map[string]int{
-	"A": map[string]int{ // opponent: rock
-		"X": 3, // loss(0) + scissors(3)
-		"Y": 4, // draw(3) + rock(1)
-		"Z": 8, // win(6) + paper(2)
-	},
-	"B": map[string]int{ // opponent: paper
-		"X": 1, // loss(0) + rock(1)
-		"Y": 5, // draw(3) + paper(2)
-		"Z": 9, // win(6) + scissors(3)
-	},
-	"C": map[string]int{ // opponent: scissors
-		"X": 2, // loss(0) + paper(2)
-		"Y": 6, // draw(3) + scissors(3)
-		"Z": 7, // win(6) + rock(1)
-	},
-}
+type Play string
+
+const (
+	Rock     = "rock"
+	Paper    = "paper"
+	Scissors = "scissors"
+)
 
 var opponentPlays = map[string]Play{
 	"A": Rock,
@@ -156,10 +121,58 @@ var vsScores = map[Play]map[Play]int{
 	},
 }
 
-type Play string
+// Solution 1 looks up the pre-computed score given the column inputs
+func solution1(w io.Writer, runner *framework.Runner) {
+	var total int
+	for runner.Scan() {
+		// Get the entries from the line
+		line := strings.TrimSpace(runner.Text())
+		cols := strings.Split(line, " ")
+		if len(cols) != 2 {
+			panic(fmt.Errorf("unexpected input: %s", line))
+		}
 
-const (
-	Rock     = "rock"
-	Paper    = "paper"
-	Scissors = "scissors"
-)
+		var score int
+		runner.ByPart(
+			func() { score = part1Scores[cols[0]][cols[1]] },
+			func() { score = part2Scores[cols[0]][cols[1]] },
+		)
+		total += score
+	}
+	fmt.Fprintf(w, "Total: %d\n", total)
+}
+
+var part1Scores = map[string]map[string]int{
+	"A": map[string]int{ // opponent: rock
+		"X": 4, // self: rock(1) + draw(3)
+		"Y": 8, // self: paper(2) + win(6)
+		"Z": 3, // self: scissors(3) + loss(0)
+	},
+	"B": map[string]int{ // opponent: paper
+		"X": 1, // self: rock(1) + loss(0)
+		"Y": 5, // self: paper(2) + draw(3)
+		"Z": 9, // self: scissors(3) + win(6)
+	},
+	"C": map[string]int{ // opponent: scissors
+		"X": 7, // self: rock(1) + win(6)
+		"Y": 2, // self: paper(2) + loss(0)
+		"Z": 6, // self: scissors(3) + draw(3)
+	},
+}
+var part2Scores = map[string]map[string]int{
+	"A": map[string]int{ // opponent: rock
+		"X": 3, // loss(0) + scissors(3)
+		"Y": 4, // draw(3) + rock(1)
+		"Z": 8, // win(6) + paper(2)
+	},
+	"B": map[string]int{ // opponent: paper
+		"X": 1, // loss(0) + rock(1)
+		"Y": 5, // draw(3) + paper(2)
+		"Z": 9, // win(6) + scissors(3)
+	},
+	"C": map[string]int{ // opponent: scissors
+		"X": 2, // loss(0) + paper(2)
+		"Y": 6, // draw(3) + scissors(3)
+		"Z": 7, // win(6) + rock(1)
+	},
+}
