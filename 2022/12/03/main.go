@@ -15,14 +15,15 @@ import (
 )
 
 func main() {
-	//framework.Register(parser, solution0)
-	//framework.Register(parser, solution0part1)
-	framework.Register(parser, solution0part2)
+	framework.Register(parser, solution0)
+	framework.Register(parser, solution1part1)
+	framework.Register(parser, solution1part2)
 	framework.Run(os.Stdout)
 }
 
 var parser = framework.LineParser
 
+// solution0 solves part 1 in O(n^2) time with a nested search on each rucksack
 func solution0(w io.Writer, runner *framework.Runner[string]) {
 	var total int
 	fmt.Fprintf(w, "%20s %20s %8s %8s\n", "rucksack1", "rucksack2", "mismatch", "priority")
@@ -49,7 +50,10 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 	fmt.Fprintf(w, "Total: %d\n", total)
 }
 
-func solution0part1(w io.Writer, runner *framework.Runner[string]) {
+// solution1part1 solves part 1 in O(log n) + O(n) time by converting the
+// rucksack to a hash (O(log n)) and then searching each item in the first
+// rucksack (O(n)) to find if the second rucksack hash has it (O(1)).
+func solution1part1(w io.Writer, runner *framework.Runner[string]) {
 	var total int
 	fmt.Fprintf(w, "%20s %20s %8s %8s\n", "rucksack1", "rucksack2", "mismatch", "priority")
 	for rucksacks := range runner.Lines() {
@@ -82,7 +86,10 @@ func solution0part1(w io.Writer, runner *framework.Runner[string]) {
 	fmt.Fprintf(w, "Total: %d\n", total)
 }
 
-func solution0part2(w io.Writer, runner *framework.Runner[string]) {
+// solution1part2 solves part 2 in O(log n) + O(n) time by converting the
+// group'srucksacks to a hash (O(log n)) and then searching each item in the first
+// rucksack (O(n)) to find if the second and third rucksack hashes have it (O(1)).
+func solution1part2(w io.Writer, runner *framework.Runner[string]) {
 	var total int
 	rucksacks := make([]string, 0, 1000)
 	rucksackHashes := make([]map[rune]bool, 0, 1000)
