@@ -82,9 +82,23 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 		}
 		// perform operations
 		fmt.Fprintf(w, "moving %d from %d to %d\n", count, from, to)
-		for i := 0; i < count; i++ {
-			stacks[to-1].push(stacks[from-1].pop())
-		}
+		runner.ByPart(
+			func() { // part 1 count > 1 does one at a time (reverses order on the to)
+				for i := 0; i < count; i++ {
+					stacks[to-1].push(stacks[from-1].pop())
+				}
+			},
+			func() { // part 2 count > 1 does all at once (keeps order on the to)
+				var toMove stack
+				for i := 0; i < count; i++ {
+					toMove.push(stacks[from-1].pop())
+				}
+				fmt.Fprintf(w, "toMove: %#v\n", toMove)
+				for len(toMove) > 0 {
+					stacks[to-1].push(toMove.pop())
+				}
+			},
+		)
 		printStacks(w, stacks)
 	}
 	fmt.Fprintf(w, "Final stacks:\n")
