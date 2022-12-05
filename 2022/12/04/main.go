@@ -36,20 +36,43 @@ func solution0(w io.Writer, runner *framework.Runner[[2]section]) {
 	//   2-8,3-7
 	//   6-6,4-6
 	//   2-6,4-8
-	var count int
+	var total, overlapping int
 	for sections := range runner.Lines() {
 		elf1 := sections[0]
 		elf2 := sections[1]
 		fmt.Fprintf(w, "elf1: %s\n", elf1.Format(max(elf1.end, elf2.end)))
 		fmt.Fprintf(w, "elf2: %s", elf2.Format(max(elf1.end, elf2.end)))
-		if elf1.overlap(elf2) || elf2.overlap(elf1) {
+		var overlap bool
+		runner.ByPart(
+			func() { overlap = elf1.overlap(elf2) || elf2.overlap(elf1) },
+			func() {
+				//   ..234....
+				//   ......678
+				//   ..23..
+				//   ....45
+				//
+				//   .....567..
+				//   .......789
+				overlap = overlap || elf1.start <= elf2.start && elf1.end >= elf2.start
+				//   ......6
+				//   ....456
+				overlap = overlap || elf1.end >= elf2.end && elf1.start <= elf2.end
+
+				// flip of the first 2
+				overlap = overlap || elf2.start <= elf1.start && elf2.end >= elf1.start
+				overlap = overlap || elf2.end >= elf1.end && elf2.start <= elf1.end
+			},
+		)
+		total++
+		if overlap {
 			fmt.Fprintf(w, " overlap\n")
-			count++
+			overlapping++
 		} else {
 			fmt.Fprintf(w, " non-overlap\n")
 		}
 	}
-	fmt.Fprintf(w, "Overlapping: %d\n", count)
+	fmt.Fprintf(w, "Total: %d\n", total)
+	fmt.Fprintf(w, "Overlapping: %d\n", overlapping)
 }
 
 type section struct {
