@@ -88,4 +88,15 @@ Both parts of this puzzle are complete! They provide two gold stars: **
 ## Solutions
 
 ```shell
+$ go test -bench=.
+goos: linux
+goarch: amd64
+pkg: github.com/ppg/advent-of-code/2022/12/06
+cpu: 11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
+BenchmarkSolution0Part1-16    	    6446	    180148 ns/op
+BenchmarkSolution0Part2-16    	     771	   1534635 ns/op
+BenchmarkSolution1Part1-16    	   10000	    104222 ns/op
+BenchmarkSolution1Part2-16    	   13665	     87169 ns/op
+PASS
+ok  	github.com/ppg/advent-of-code/2022/12/06	5.658s
 ```

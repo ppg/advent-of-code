@@ -8,3 +8,5 @@ import (
 
 func BenchmarkSolution0Part1(b *testing.B) { framework.Benchmark(b, parser, solution0, 1) }
 func BenchmarkSolution0Part2(b *testing.B) { framework.Benchmark(b, parser, solution0, 2) }
+func BenchmarkSolution1Part1(b *testing.B) { framework.Benchmark(b, parser, solution1, 1) }
+func BenchmarkSolution1Part2(b *testing.B) { framework.Benchmark(b, parser, solution1, 2) }
