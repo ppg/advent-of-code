@@ -5,11 +5,6 @@ import (
 	"reflect"
 )
 
-type Lessor[T any] interface {
-	Less(T) bool
-}
-
-// Heap ...
 type Heap[T Lessor[T]] []T
 
 func (h Heap[T]) Len() int           { return len(h) }
@@ -21,6 +16,7 @@ func (h Heap[T]) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 // TODO(ppg): allow meeting an interface to modify item on push and ppo;
 // for example PriorityQueue wants to set index=len(*h) on Push and clear
 // that on Pop.
+
 func (h *Heap[T]) Push(x any) {
 	item := x.(T)
 	//item.index = len(*h)

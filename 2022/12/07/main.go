@@ -82,7 +82,7 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 	// - (part1) the sum of all directories < 100000
 	// - (part2) the smallest dir that is greater than required size
 	// TODO(ppg): use heap to avoid sorting
-	sort.Stable(BySize(dirs))
+	sort.Stable(framework.Array[*Node](dirs))
 	for _, dir := range dirs {
 		fmt.Fprintf(w, "  %s\n", dir)
 		if dir.size <= 100000 {
@@ -114,11 +114,8 @@ func (t FSType) String() string {
 	}
 }
 
-type BySize []*Node
-
-func (a BySize) Len() int           { return len(a) }
-func (a BySize) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a BySize) Less(i, j int) bool { return a[i].size > a[j].size }
+// Less sorts largest size to smallest size.
+func (n *Node) Less(other *Node) bool { return n.size > other.size }
 
 type Node struct {
 	parent   *Node
