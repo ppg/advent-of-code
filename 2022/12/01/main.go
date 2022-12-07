@@ -63,10 +63,13 @@ type Elf struct {
 	calories int
 }
 
+// Less prioritizes more calories so the top of the heap is the largest calories
+func (e Elf) Less(other Elf) bool { return e.calories > other.calories }
+
 // Solution 1 uses a heap to track the highest elves in an ongoing, efficient fashion.
 // This solution handles both parts of the question.
 func solution1(w io.Writer, runner *framework.Runner[string]) {
-	elves := make(ElfHeap, 0, 256) // 256 is the input.txt size
+	elves := make(framework.Heap[Elf], 0, 256) // 256 is the input.txt size
 	var elf Elf
 	for line := range runner.Lines() {
 		if line == "" {
@@ -94,26 +97,4 @@ func solution1(w io.Writer, runner *framework.Runner[string]) {
 		total += elf.calories
 	}
 	fmt.Fprintf(w, "Total: %d\n", total)
-}
-
-type ElfHeap []Elf
-
-func (h ElfHeap) Len() int { return len(h) }
-
-// Less prioritizes more calories so the top of the heap is the largest calories
-func (h ElfHeap) Less(i, j int) bool { return h[i].calories > h[j].calories }
-func (h ElfHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
-func (h *ElfHeap) Push(x any) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*h = append(*h, x.(Elf))
-}
-
-func (h *ElfHeap) Pop() any {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
 }
