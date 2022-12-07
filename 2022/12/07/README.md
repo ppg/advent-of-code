@@ -159,7 +159,8 @@ goos: linux
 goarch: amd64
 pkg: github.com/ppg/advent-of-code/2022/12/07
 cpu: Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz
-BenchmarkSolution0-4   	     907	   1191243 ns/op
+BenchmarkSolution0-4   	     931	   1255669 ns/op
+BenchmarkSolution1-4   	     876	   1262782 ns/op
 PASS
-ok  	github.com/ppg/advent-of-code/2022/12/07	1.217s
+ok  	github.com/ppg/advent-of-code/2022/12/07	2.548s
 ```

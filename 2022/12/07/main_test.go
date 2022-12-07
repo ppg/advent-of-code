@@ -7,3 +7,4 @@ import (
 )
 
 func BenchmarkSolution0(b *testing.B) { framework.Benchmark(b, parser, solution0, 1) }
+func BenchmarkSolution1(b *testing.B) { framework.Benchmark(b, parser, solution1, 1) }

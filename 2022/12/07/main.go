@@ -3,6 +3,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"io"
 	"os"
@@ -15,12 +16,13 @@ import (
 
 func main() {
 	framework.Register(parser, solution0)
+	framework.Register(parser, solution1)
 	framework.Run(os.Stdout)
 }
 
 var parser = framework.LineParser
 
-func solution0(w io.Writer, runner *framework.Runner[string]) {
+func parseFS(w io.Writer, runner *framework.Runner[string]) *Node {
 	root := &Node{name: "/", children: make(map[string]*Node), fsType: FSDirectory}
 	cur := root
 	for line := range runner.Lines() {
@@ -63,10 +65,14 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 			}
 		}
 	}
+	return root
+}
+
+func solution0(w io.Writer, runner *framework.Runner[string]) {
+	root := parseFS(w, runner)
 
 	// Print the tree, accumulating the dirs and the total FS size
-	// TODO(ppg): rename from Fprintf
-	dirs, size := root.Fprint(w)
+	dirs, size := root.solution0(w, 0)
 
 	// Calculate required space
 	unused := 70000000 - size
@@ -84,6 +90,39 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 	// TODO(ppg): use heap to avoid sorting
 	sort.Stable(framework.Array[*Node](dirs))
 	for _, dir := range dirs {
+		fmt.Fprintf(w, "  %s\n", dir)
+		if dir.size <= 100000 {
+			sum += dir.size
+		}
+		if dir.size > required {
+			chosen = dir
+		}
+	}
+	fmt.Fprintf(w, "sum (part 1): %d\n", sum)
+	fmt.Fprintf(w, "chosen (part 2):\n  %s\n", chosen)
+}
+
+func solution1(w io.Writer, runner *framework.Runner[string]) {
+	root := parseFS(w, runner)
+
+	// Print the tree, accumulating the dirs and the total FS size
+	dirs, size := root.solution1(w, 0)
+
+	// Calculate required space
+	unused := 70000000 - size
+	fmt.Fprintf(w, "    unused: %d\n", unused)
+	required := 30000000 - unused
+	fmt.Fprintf(w, "  required: %d\n", required)
+
+	var sum int
+	var chosen *Node
+	fmt.Fprintf(w, "candidates\n")
+
+	// Go through directories (heap has them largest to smallest); find
+	// - (part1) the sum of all directories < 100000
+	// - (part2) the smallest dir that is greater than required size
+	for dirs.Len() > 0 {
+		dir := heap.Pop(&dirs).(*Node)
 		fmt.Fprintf(w, "  %s\n", dir)
 		if dir.size <= 100000 {
 			sum += dir.size
@@ -132,32 +171,52 @@ func (n *Node) String() string {
 	case FSDirectory:
 		if n.size > 0 {
 			return fmt.Sprintf("%s (dir, size=%d)", n.name, n.size)
-		} else {
-			return fmt.Sprintf("%s (dir)", n.name)
 		}
+		return fmt.Sprintf("%s (dir)", n.name)
 	default:
 		panic(fmt.Errorf("unrecognized type: %d", n.fsType))
 	}
 }
 
-func (n *Node) Fprint(w io.Writer) (acc []*Node, size int) {
-	return n.fprint(w, 0)
-}
-
-func (n *Node) fprint(w io.Writer, indent int) (acc []*Node, size int) {
+func (n *Node) solution0(w io.Writer, indent int) (dirs []*Node, size int) {
 	fmt.Fprintf(w, "%*s %s\n", indent, "-", n)
 	switch n.fsType {
 	case FSFile:
 		return nil, n.size
 	case FSDirectory:
 		for _, child := range n.children {
-			cacc, csize := child.fprint(w, indent+2)
+			cdirs, csize := child.solution0(w, indent+2)
 			size += csize
-			acc = append(acc, cacc...)
+			dirs = append(dirs, cdirs...)
 		}
 		// store the size we computed for this node
 		n.size = size
-		acc = append(acc, n)
+		dirs = append(dirs, n)
+		fmt.Fprintf(w, "%*ssize=%d\n", indent+1, "", size)
+		return
+	default:
+		panic(fmt.Errorf("unrecognized type: %d", n.fsType))
+	}
+}
+
+func (n *Node) solution1(w io.Writer, indent int) (dirs framework.Heap[*Node], size int) {
+	fmt.Fprintf(w, "%*s %s\n", indent, "-", n)
+	switch n.fsType {
+	case FSFile:
+		return nil, n.size
+	case FSDirectory:
+		for _, child := range n.children {
+			cdirs, csize := child.solution1(w, indent+2)
+			size += csize
+			// TODO(ppg): look into a merge function for framework.Heap if it can be
+			// done more efficiently
+			for cdirs.Len() > 0 {
+				heap.Push(&dirs, heap.Pop(&cdirs))
+			}
+		}
+		// store the size we computed for this node
+		n.size = size
+		heap.Push(&dirs, n)
 		fmt.Fprintf(w, "%*ssize=%d\n", indent+1, "", size)
 		return
 	default:
