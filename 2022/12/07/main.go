@@ -80,15 +80,14 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 	required := 30000000 - unused
 	fmt.Fprintf(w, "  required: %d\n", required)
 
-	var sum int
-	var chosen *Node
-	fmt.Fprintf(w, "candidates\n")
-
 	// Go through directories from largest to smallest; find
 	// - (part1) the sum of all directories < 100000
 	// - (part2) the smallest dir that is greater than required size
 	// TODO(ppg): use heap to avoid sorting
+	var sum int
+	var chosen *Node
 	sort.Stable(framework.Array[*Node](dirs))
+	fmt.Fprintf(w, "candidates\n")
 	for _, dir := range dirs {
 		fmt.Fprintf(w, "  %s\n", dir)
 		if dir.size <= 100000 {
@@ -114,20 +113,19 @@ func solution1(w io.Writer, runner *framework.Runner[string]) {
 	required := 30000000 - unused
 	fmt.Fprintf(w, "  required: %d\n", required)
 
+	// Go through directories (heap has them smallest to largest); find
+	// - (part1) the sum of all directories < 100000
+	// - (part2) the smallest dir that is greater than required size
 	var sum int
 	var chosen *Node
 	fmt.Fprintf(w, "candidates\n")
-
-	// Go through directories (heap has them largest to smallest); find
-	// - (part1) the sum of all directories < 100000
-	// - (part2) the smallest dir that is greater than required size
 	for dirs.Len() > 0 {
 		dir := heap.Pop(&dirs).(*Node)
 		fmt.Fprintf(w, "  %s\n", dir)
 		if dir.size <= 100000 {
 			sum += dir.size
 		}
-		if dir.size > required {
+		if dir.size > required && chosen == nil {
 			chosen = dir
 		}
 	}
@@ -154,7 +152,7 @@ func (t FSType) String() string {
 }
 
 // Less sorts largest size to smallest size.
-func (n *Node) Less(other *Node) bool { return n.size > other.size }
+func (n *Node) Less(other *Node) bool { return n.size < other.size }
 
 type Node struct {
 	parent   *Node
