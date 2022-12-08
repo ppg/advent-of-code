@@ -204,39 +204,39 @@ func solution0(w io.Writer, runner *framework.Runner[[]int]) {
 			//trees.Format(w, func(t *Tree) string { return strconv.Itoa(t.height) })
 			//width := 2
 			for row := 0; row < rows; row++ {
-				// auto-collapse
-				var expand string
-				var (
-					start1 int
-					end1   = cols - 1
-					start2 int
-					end2   int
-				)
-				if cols > 20 {
-					expand = "... "
-				}
+				//// auto-collapse
+				//var expand string
+				//var (
+				//	start1 int
+				//	end1   = cols - 1
+				//	start2 int
+				//	end2   int
+				//)
+				//if cols > 20 {
+				//	expand = "... "
+				//}
 
-				fmt.Fprintf(w, "   lefts[%d]: %s %s%s\n", row,
-					formatRow(trees[row], start1, end1, formatLeft), expand, formatRow(trees[row], start2, end2, formatLeft))
-				fmt.Fprintf(w, " heights[%d]: %s %s%s\n", row,
-					formatRow(trees[row], start1, end1, formatHeight), expand, formatRow(trees[row], start2, end2, formatHeight))
-				fmt.Fprintf(w, "  rights[%d]: %s %s%s\n", row,
-					formatRow(trees[row], start1, end1, formatRight), expand, formatRow(trees[row], start2, end2, formatRight))
-				fmt.Fprintf(w, "\n")
+				//fmt.Fprintf(w, "   lefts[%d]: %s %s%s\n", row,
+				//	formatRow(trees[row], start1, end1, formatLeft), expand, formatRow(trees[row], start2, end2, formatLeft))
+				//fmt.Fprintf(w, " heights[%d]: %s %s%s\n", row,
+				//	formatRow(trees[row], start1, end1, formatHeight), expand, formatRow(trees[row], start2, end2, formatHeight))
+				//fmt.Fprintf(w, "  rights[%d]: %s %s%s\n", row,
+				//	formatRow(trees[row], start1, end1, formatRight), expand, formatRow(trees[row], start2, end2, formatRight))
+				//fmt.Fprintf(w, "\n")
 			}
 
-			fmt.Fprintf(w, "heights:\n")
-			trees.Format(w, 1, formatHeight)
-			fmt.Fprintf(w, "ups:\n")
-			trees.Format(w, 1, formatUp)
-			fmt.Fprintf(w, "lefts:\n")
-			trees.Format(w, 1, formatLeft)
-			fmt.Fprintf(w, "rights:\n")
-			trees.Format(w, 1, formatRight)
-			fmt.Fprintf(w, "downs:\n")
-			trees.Format(w, 1, formatDown)
-			fmt.Fprintf(w, "scores:\n")
-			trees.Format(w, 1, formatScore)
+			//fmt.Fprintf(w, "heights:\n")
+			//trees.Format(w, 1, formatHeight)
+			//fmt.Fprintf(w, "ups:\n")
+			//trees.Format(w, 1, formatUp)
+			//fmt.Fprintf(w, "lefts:\n")
+			//trees.Format(w, 1, formatLeft)
+			//fmt.Fprintf(w, "rights:\n")
+			//trees.Format(w, 1, formatRight)
+			//fmt.Fprintf(w, "downs:\n")
+			//trees.Format(w, 1, formatDown)
+			//fmt.Fprintf(w, "scores:\n")
+			//trees.Format(w, 1, formatScore)
 
 			// Find the best
 			var best *Tree
