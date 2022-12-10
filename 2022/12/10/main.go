@@ -33,7 +33,7 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 		sampleSignals    []int
 		sampleSignalsSum int
 	)
-	//instructions := make([]*Instruction, 0, 1000)
+	positions := make(map[int]int)
 	for line := range runner.Lines() {
 		// ** before cycle
 
@@ -68,8 +68,34 @@ func solution0(w io.Writer, runner *framework.Runner[string]) {
 		// increment register after the cycle has completed
 		x += value
 		fmt.Fprintf(w, "%4d: %3d - %s\n", cycle, x, line)
+		positions[cycle] = x
 	}
 	fmt.Fprintf(w, "sample signal strength sum: %d\n", sampleSignalsSum)
+
+	// draw
+	// sprite starts at 1
+	// 0123456789012345678901234567890123456789
+	// ###.....................................
+	pos := 1
+	for row := 0; row < 6; row++ {
+		for i := 0; i < 40; i++ {
+			cycle := row*40 + i + 1
+
+			// 0123456789012345678901234567890123456789
+			// ...............###......................
+			pixel := "."
+			if i >= pos-1 && i <= pos+1 {
+				pixel = "#"
+			}
+			fmt.Fprint(w, pixel)
+
+			// If we have a new sprite position adjust
+			if newPos, ok := positions[cycle]; ok {
+				pos = newPos
+			}
+		}
+		fmt.Fprintln(w)
+	}
 }
 
 // TODO(ppg): framework candidate
