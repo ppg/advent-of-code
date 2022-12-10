@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	framework "github.com/ppg/advent-of-code/2022/12/framework"
 )
@@ -23,41 +24,61 @@ var parser = func(line string) *Move {
 }
 
 func solution0(w io.Writer, runner *framework.Runner[*Move]) {
-	// R 4
-	// U 4
-	// L 3
-	// D 1
-	// R 4
-	// D 1
-	// L 5
-	// R 2
-	head := &Position{label: "H"}
-	tail := &Position{label: "T"}
-	draw(w, head, tail)
-	fmt.Fprintln(w)
+	xMin := parseEnvInt("X_MIN")
+	xMax := parseEnvInt("X_MAX")
+	yMin := parseEnvInt("Y_MIN")
+	yMax := parseEnvInt("Y_MAX")
+	var showDebug bool
+	if xMax == 0 {
+		showDebug = true
+	}
+
+	var knotCount int
+	runner.ByPart(
+		func() { knotCount = 2 },
+		func() { knotCount = 10 },
+	)
+	knots := make([]*Position, knotCount)
+	for i := range knots {
+		label := fmt.Sprintf("%d", i)
+		if i == 0 {
+			label = "H"
+		}
+		knots[i] = &Position{label: label}
+	}
+	draw(w, showDebug, xMin, xMax, yMin, yMax, knots...)
 	visited := make([]*Position, 0, 1000)
 	mVisited := make(map[int]map[int]bool)
 	//visited := make(map[Position]bool)
 	for move := range runner.Lines() {
-		fmt.Fprintf(w, "\n== %s %d ==\n", move.dir, move.steps)
-		fmt.Fprintln(w)
+		if !showDebug {
+			fmt.Fprintf(w, "\n== %s %d ==\n", move.dir, move.steps)
+			fmt.Fprintln(w)
+		}
 		for i := 0; i < move.steps; i++ {
 			// move head
-			head.step(move.dir)
+			knots[0].step(move.dir)
 
-			// move tail if necessary
-			deltaX := head.x - tail.x
-			deltaY := head.y - tail.y
-			tailStep := tailSteps[deltaX][deltaY]
-			//fmt.Fprintf(w, "head=%s\n", head)
-			//fmt.Fprintf(w, "tail=%s\n", tail)
-			fmt.Fprintf(w, "head=%s tail=%s deltaX=(%d,%d) => %s\n", head, tail, deltaX, deltaY, tailStep)
-			tail.step(tailStep)
+			// move each knot in order
+			for i := 1; i < len(knots); i++ {
+				moveTail(w, i, knots[i-1], knots[i])
+			}
 
-			// Draw after moves
-			draw(w, head, tail)
-			fmt.Fprintln(w)
+			//// move tail if necessary
+			//tail := knots[len(knots)-1]
+			//deltaX := head.x - tail.x
+			//deltaY := head.y - tail.y
+			//tailStep := tailSteps[deltaX][deltaY]
+			////fmt.Fprintf(w, "head=%s\n", head)
+			////fmt.Fprintf(w, "tail=%s\n", tail)
+			//fmt.Fprintf(w, "head=%s tail=%s deltaX=(%d,%d) => %s\n", head, tail, deltaX, deltaY, tailStep)
+			//tail.step(tailStep)
 
+			// Draw after steps
+			//draw(w, showDebug, xMin, xMax, yMin, yMax, knots...)
+
+			// Check what the tail has visited
+			tail := knots[len(knots)-1]
 			if !mVisited[tail.x][tail.y] {
 				if _, ok := mVisited[tail.x]; !ok {
 					mVisited[tail.x] = make(map[int]bool)
@@ -65,17 +86,76 @@ func solution0(w io.Writer, runner *framework.Runner[*Move]) {
 				mVisited[tail.x][tail.y] = true
 				visited = append(visited, &Position{label: "#", x: tail.x, y: tail.y})
 			}
+			for i := 0; i < len(knots); i++ {
+				xMin = min(xMin, knots[i].x)
+				xMax = max(xMax, knots[i].x)
+				yMin = min(yMin, knots[i].y)
+				yMax = max(yMax, knots[i].y)
+			}
 		}
+
+		// Draw after moves
+		draw(w, showDebug, xMin, xMax, yMin, yMax, knots...)
 	}
 
 	fmt.Fprintln(w, "== Visited ==")
-	draw(w, visited...)
+	draw(w, showDebug, xMin, xMax, yMin, yMax, visited...)
 	fmt.Fprintf(w, "Count: %d\n", len(visited))
+	if showDebug {
+		fmt.Fprintln(w, "For debug:")
+		runner.ByPart(
+			func() {
+				fmt.Fprintf(w, "X_MIN=%d X_MAX=%d Y_MIN=%d Y_MAX=%d PART=%d go run main.go %s\n", xMin, xMax, yMin, yMax, 1, strings.Join(os.Args[1:], " "))
+			},
+			func() {
+				fmt.Fprintf(w, "X_MIN=%d X_MAX=%d Y_MIN=%d Y_MAX=%d PART=%d go run main.go %s\n", xMin, xMax, yMin, yMax, 2, strings.Join(os.Args[1:], " "))
+			},
+		)
+	}
 }
 
-// tailSteps [delta x][delta y]
-// delta -2 to 2 for ta, no -2 in both
-var tailSteps = map[int]map[int]Direction{
+func moveTail(w io.Writer, i int, prev, knot *Position) {
+	deltaX := prev.x - knot.x
+	deltaY := prev.y - knot.y
+
+	var knotStep Direction
+	switch {
+	case deltaX == 0 && deltaY == 0: // no movement
+
+	case deltaX == 0 && deltaY > 1:
+		knotStep = Up
+	case deltaX == 0 && deltaY < -1:
+		knotStep = Down
+	case deltaX > 1 && deltaY == 0:
+		knotStep = Right
+	case deltaX < -1 && deltaY == 0:
+		knotStep = Left
+
+	case (deltaX > 1 && deltaY > 0) || (deltaX > 0 && deltaY > 1):
+		knotStep = UpRight
+	case (deltaX < -1 && deltaY > 0) || (deltaX < 0 && deltaY > 1):
+		knotStep = UpLeft
+	case (deltaX < -1 && deltaY < 0) || (deltaX < 0 && deltaY < -1):
+		knotStep = DownLeft
+	case (deltaX > 1 && deltaY < 0) || (deltaX > 0 && deltaY < -1):
+		knotStep = DownRight
+	}
+
+	//fmt.Fprintf(w, "%d: prev=%s knot=%s deltaX=(%d,%d) => %s\n", i, prev, knot, deltaX, deltaY, knotStep)
+	knot.step(knotStep)
+}
+
+func moveTailBackup(w io.Writer, i int, prev, knot *Position) {
+	deltaX := prev.x - knot.x
+	deltaY := prev.y - knot.y
+	knotStep := knotSteps[deltaX][deltaY]
+	fmt.Fprintf(w, "%d: prev=%s knot=%s deltaX=(%d,%d) => %s\n", i, prev, knot, deltaX, deltaY, knotStep)
+	knot.step(knotStep)
+}
+
+// knotSteps [delta x][delta y]
+// delta is from the knot ahead, so - means left/down
+var knotSteps = map[int]map[int]Direction{
 	-2: map[int]Direction{
 		-1: DownLeft, // head is 2 left 1 down
 		0:  Left,     // head is 2 left
@@ -111,19 +191,13 @@ var tailSteps = map[int]map[int]Direction{
 
 var start = &Position{label: "s"}
 
-func draw(w io.Writer, positions ...*Position) {
-	var xSize int = 6
-	var ySize int = 5
-	for _, pos := range positions {
-		if pos.x > xSize {
-			xSize = pos.x
-		}
-		if pos.y > ySize {
-			ySize = pos.y
-		}
+func draw(w io.Writer, showDebug bool, xMin, xMax, yMin, yMax int, positions ...*Position) {
+	// If we're going to show debug, skip printing
+	if showDebug {
+		return
 	}
-	for y := ySize - 1; y >= 0; y-- {
-		for x := 0; x < xSize; x++ {
+	for y := yMax; y >= yMin; y-- {
+		for x := xMin; x < xMax; x++ {
 			var found bool
 			for _, pos := range positions {
 				if pos.at(x, y) {
@@ -143,16 +217,7 @@ func draw(w io.Writer, positions ...*Position) {
 		}
 		fmt.Fprintln(w)
 	}
-}
-
-func max(values ...int) int {
-	var out int
-	for _, value := range values {
-		if value > out {
-			out = value
-		}
-	}
-	return out
+	fmt.Fprintln(w)
 }
 
 type Position struct {
@@ -211,3 +276,32 @@ const (
 	DownRight Direction = "DR"
 	DownLeft  Direction = "DL"
 )
+
+// TODO(ppg): move to framework
+
+func parseEnvInt(key string) int {
+	if value, ok := os.LookupEnv(key); ok {
+		return framework.ParseInt(value)
+	}
+	return 0
+}
+
+func min(values ...int) int {
+	var out int
+	for _, value := range values {
+		if value < out {
+			out = value
+		}
+	}
+	return out
+}
+
+func max(values ...int) int {
+	var out int
+	for _, value := range values {
+		if value > out {
+			out = value
+		}
+	}
+	return out
+}
