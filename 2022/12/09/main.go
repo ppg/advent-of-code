@@ -46,7 +46,9 @@ func solution0(w io.Writer, runner *framework.Runner[*Move]) {
 		}
 		knots[i] = &Position{label: label}
 	}
-	draw(w, showDebug, xMin, xMax, yMin, yMax, knots...)
+	if !showDebug {
+		draw(w, xMin, xMax, yMin, yMax, knots...)
+	}
 	visited := make([]*Position, 0, 1000)
 	mVisited := make(map[int]map[int]bool)
 	//visited := make(map[Position]bool)
@@ -61,21 +63,13 @@ func solution0(w io.Writer, runner *framework.Runner[*Move]) {
 
 			// move each knot in order
 			for i := 1; i < len(knots); i++ {
-				moveTail(w, i, knots[i-1], knots[i])
+				moveTail(w, showDebug, i, knots[i-1], knots[i])
 			}
 
-			//// move tail if necessary
-			//tail := knots[len(knots)-1]
-			//deltaX := head.x - tail.x
-			//deltaY := head.y - tail.y
-			//tailStep := tailSteps[deltaX][deltaY]
-			////fmt.Fprintf(w, "head=%s\n", head)
-			////fmt.Fprintf(w, "tail=%s\n", tail)
-			//fmt.Fprintf(w, "head=%s tail=%s deltaX=(%d,%d) => %s\n", head, tail, deltaX, deltaY, tailStep)
-			//tail.step(tailStep)
-
 			// Draw after steps
-			//draw(w, showDebug, xMin, xMax, yMin, yMax, knots...)
+			if !showDebug {
+				draw(w, xMin, xMax, yMin, yMax, knots...)
+			}
 
 			// Check what the tail has visited
 			tail := knots[len(knots)-1]
@@ -95,12 +89,16 @@ func solution0(w io.Writer, runner *framework.Runner[*Move]) {
 		}
 
 		// Draw after moves
-		draw(w, showDebug, xMin, xMax, yMin, yMax, knots...)
+		if !showDebug {
+			draw(w, xMin, xMax, yMin, yMax, knots...)
+		}
 	}
 
-	fmt.Fprintln(w, "== Visited ==")
-	draw(w, showDebug, xMin, xMax, yMin, yMax, visited...)
-	fmt.Fprintf(w, "Count: %d\n", len(visited))
+	if !showDebug {
+		fmt.Fprintln(w, "== Visited ==")
+		draw(w, xMin, xMax, yMin, yMax, visited...)
+	}
+	fmt.Fprintf(w, "Visited Count (knots: %d): %d\n", len(knots), len(visited))
 	if showDebug {
 		fmt.Fprintln(w, "For debug:")
 		runner.ByPart(
@@ -114,7 +112,7 @@ func solution0(w io.Writer, runner *framework.Runner[*Move]) {
 	}
 }
 
-func moveTail(w io.Writer, i int, prev, knot *Position) {
+func moveTail(w io.Writer, showDebug bool, i int, prev, knot *Position) {
 	deltaX := prev.x - knot.x
 	deltaY := prev.y - knot.y
 
@@ -141,7 +139,9 @@ func moveTail(w io.Writer, i int, prev, knot *Position) {
 		knotStep = DownRight
 	}
 
-	//fmt.Fprintf(w, "%d: prev=%s knot=%s deltaX=(%d,%d) => %s\n", i, prev, knot, deltaX, deltaY, knotStep)
+	if !showDebug {
+		fmt.Fprintf(w, "%d: prev=%s knot=%s deltaX=(%d,%d) => %s\n", i, prev, knot, deltaX, deltaY, knotStep)
+	}
 	knot.step(knotStep)
 }
 
@@ -191,11 +191,7 @@ var knotSteps = map[int]map[int]Direction{
 
 var start = &Position{label: "s"}
 
-func draw(w io.Writer, showDebug bool, xMin, xMax, yMin, yMax int, positions ...*Position) {
-	// If we're going to show debug, skip printing
-	if showDebug {
-		return
-	}
+func draw(w io.Writer, xMin, xMax, yMin, yMax int, positions ...*Position) {
 	for y := yMax; y >= yMin; y-- {
 		for x := xMin; x < xMax; x++ {
 			var found bool
